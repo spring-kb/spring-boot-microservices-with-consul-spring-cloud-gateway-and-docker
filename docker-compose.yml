@@ -1,0 +1,82 @@
+services:
+  userservice:
+    container_name: userservice
+    build:
+      context: ./userservice
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    links:
+      - consul-dev
+    environment:
+      #- SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+    depends_on:
+      - consul-dev
+    networks:
+      - spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker
+  deptservice:
+    container_name: deptservice
+    build:
+      context: ./deptservice
+      dockerfile: Dockerfile
+    ports:
+      - 3002:3002
+    links:
+      - consul-dev
+    environment:
+      #- SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+    networks:
+      - spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker
+  organizationservice:
+    container_name: organizationservice
+    build:
+      context: ./organizationservice
+      dockerfile: Dockerfile
+    ports:
+      - 3003:3003
+    links:
+      - consul-dev
+    environment:
+      #- SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+    networks:
+      - spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker
+  gatewayservice:
+    container_name: gatewayservice
+    build:
+      context: ./gatewayservice
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    links:
+      - consul-dev
+    environment:
+      #- SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONSUL_HOST=consul
+    networks:
+      - spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker
+  # consul-importer:
+  #   build:
+  #     context: ./docker/consul
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     - consul-dev
+  #   #volumes:
+  #   #- ./docker/consul/consul-kv-docker.json:/usr/src/consul/consul-kv-docker.json
+  #   networks:
+  #     - spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker
+  consul-dev:
+    image: hashicorp/consul
+    container_name: consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: "agent -dev -node=spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker -client=0.0.0.0 -log-level=INFO"
+    networks:
+      - spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker
+
+networks:
+  spring-boot-microservices-with-consul-spring-cloud-gateway-and-docker:
+    driver: bridge

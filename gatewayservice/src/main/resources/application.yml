@@ -1,0 +1,63 @@
+server:
+  port: 8080
+  servlet:
+    application-display-name: gateway-service
+spring:
+  application:
+    name: gateway-service
+  main:
+    web-application-type: reactive
+  config:
+    import:
+      - "optional:consul:"
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      config:
+        enabled: false
+      discovery:
+        #healthCheckPath: /my-health-check
+        #healthCheckInterval: 20s
+        enabled: true
+        instanceId: ${spring.application.name}:${random.value}
+    loadbalancer:
+      # Since  Netflix’s Ribbon in maintenance mode, let’s discard that option and choose the Spring’s load balancer implementation
+      ribbon:
+        enabled: false
+      consul:
+        enabled: true
+      discovery:
+        # instruct the service discovery client to retrieve only the healthy services
+        # With the query-passing parameter set to true, the Spring implementation will use
+        # the Consul API with a filter to retrieve only those services that have a passing health check
+        query-passing: true
+        # Given that you added the Consul starter, the Gateway service is also registering itself
+        # in Consul. That is not strictly necessary since other services won’t call the gateway, but
+        # it’s still useful to check its status. Alternatively, you could set the configuration parameter
+        # spring.cloud.consul.discovery.register to false to keep using the service discovery
+        # client features but disable the registration of the Gateway service.
+        register: true
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user/**
+          metadata:
+            response-timeout: 200
+            connect-timeout: 200
+        - id: dept-service
+          uri: lb://dept-service
+          predicates:
+            - Path=/department/**
+          metadata:
+            response-timeout: 400
+            connect-timeout: 400
+        - id: organization-service
+          uri: lb://organization-service
+          predicates:
+            - Path=/organization/**
+          metadata:
+            response-timeout: 400
+            connect-timeout: 400
